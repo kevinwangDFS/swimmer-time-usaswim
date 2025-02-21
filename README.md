@@ -4,7 +4,17 @@ A Python package to scrape swimmer time data from USA Swimming.
 
 ## Installation
 
+### From PyPI
+
 ```bash
+pip install swimmer-time
+```
+
+### From Source
+
+```bash
+git clone https://github.com/kevinwang/swimmer-time.git
+cd swimmer-time
 poetry install
 ```
 

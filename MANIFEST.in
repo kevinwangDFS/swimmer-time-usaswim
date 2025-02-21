@@ -1,0 +1,7 @@
+include LICENSE
+include README.md
+include pyproject.toml
+include poetry.lock
+include config/config.yaml
+recursive-exclude * __pycache__
+recursive-exclude * *.py[cod]

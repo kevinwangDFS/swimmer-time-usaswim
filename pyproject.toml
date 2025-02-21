@@ -3,8 +3,23 @@ name = "swimmer-time"
 version = "0.1.0"
 description = "A package to scrape swimmer time data from USA Swimming"
 authors = ["Kevin Wang"]
+license = "MIT"
 readme = "README.md"
 packages = [{ include = "swimmer_time", from = "src" }]
+repository = "https://github.com/kevinwangDFS/swimmer-time-usaswim"
+keywords = ["swimming", "usa-swimming", "scraper", "selenium", "data"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/kevinwangDFS/swimmer-time-usaswim/issues"
 
 [tool.poetry.dependencies]
 python = "^3.8"
