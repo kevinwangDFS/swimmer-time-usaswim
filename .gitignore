@@ -22,3 +22,5 @@ ENV/
 .vscode/
 *.log"
 *.csv
+.DS_Store
+.gitignore
