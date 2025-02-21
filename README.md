@@ -14,8 +14,20 @@ Edit `config/config.yaml` to set:
 
 - ChromeDriver path
 - Wait time for page loads
-- Output file path
+- Output file path and validation settings
+  - `file`: Path to save the CSV output
+  - `save_invalid_data`: Set to true to save data even if validation fails
 - Swimmer details (name, club, year)
+
+## Features
+
+- Automatic retry mechanism for web operations with exponential backoff
+- Data validation and cleaning
+  - Validates expected columns are present
+  - Converts dates to proper datetime format
+  - Cleans time strings
+  - Removes empty rows
+- Configurable invalid data handling
 
 ## Usage
 
@@ -52,3 +64,22 @@ python -m swimmer_time.cli
 ```
 
 Make sure to configure the settings in `config/config.yaml` before running.
+
+### Error Handling
+
+The scraper includes several error handling features:
+
+1. Automatic Retries
+   - Web operations automatically retry on failure
+   - Uses exponential backoff between attempts
+   - Configurable max retries and initial delay
+
+2. Data Validation
+   - Validates data structure and content
+   - Reports validation errors and warnings
+   - Optional saving of invalid data (controlled by config)
+
+3. Logging
+   - Detailed logging of operations
+   - Error and warning messages
+   - Validation status reporting

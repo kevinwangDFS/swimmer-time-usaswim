@@ -4,6 +4,7 @@ chromedriver:
 
 output:
   file: "downloaded_table.csv"
+  save_invalid_data: false # Set to true to save data even if validation fails
 
 swimmer:
   first_name: "Alyssa"

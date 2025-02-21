@@ -2,7 +2,8 @@
 
 import time
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple
+from functools import wraps
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -10,11 +11,107 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait, Select
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+
+def retry_on_exception(max_retries: int = 3, initial_delay: int = 1):
+    """
+    Decorator that retries a function on specified exceptions with exponential backoff.
+
+    Args:
+        max_retries (int): Maximum number of retry attempts
+        initial_delay (int): Initial delay between retries in seconds
+    """
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            delay = initial_delay
+            last_exception = None
+
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except (TimeoutException, WebDriverException) as e:
+                    last_exception = e
+                    if attempt == max_retries - 1:
+                        logger.error(f"Final attempt failed: {str(e)}")
+                        raise
+                    logger.warning(f"Attempt {attempt + 1} failed: {str(e)}")
+                    time.sleep(delay)
+                    delay *= 2  # Exponential backoff
+
+            if last_exception:
+                raise last_exception
+            return None
+
+        return wrapper
+
+    return decorator
+
+
+class SwimmerDataValidator:
+    """Validates and cleans swimmer time data."""
+
+    EXPECTED_COLUMNS = ["Date", "Meet", "Event", "Time", "Standard"]
+
+    @staticmethod
+    def validate_dataframe(df: pd.DataFrame) -> Tuple[pd.DataFrame, dict]:
+        """
+        Validates the structure and content of the scraped data.
+
+        Args:
+            df (pd.DataFrame): Raw scraped data
+
+        Returns:
+            Tuple[pd.DataFrame, dict]: Cleaned dataframe and validation results
+        """
+        validation_results = {"is_valid": True, "errors": [], "warnings": []}
+
+        # Validate structure
+        if df.empty:
+            validation_results["is_valid"] = False
+            validation_results["errors"].append("Empty dataset")
+            return df, validation_results
+
+        # Validate columns
+        missing_cols = set(SwimmerDataValidator.EXPECTED_COLUMNS) - set(df.columns)
+        if missing_cols:
+            validation_results["errors"].append(f"Missing columns: {missing_cols}")
+            validation_results["is_valid"] = False
+
+        # Clean and validate data
+        df = SwimmerDataValidator.clean_data(df)
+
+        return df, validation_results
+
+    @staticmethod
+    def clean_data(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Cleans and standardizes the data.
+
+        Args:
+            df (pd.DataFrame): Raw dataframe
+
+        Returns:
+            pd.DataFrame: Cleaned dataframe
+        """
+        # Remove any completely empty rows
+        df = df.dropna(how="all")
+
+        # Convert date strings to datetime
+        if "Date" in df.columns:
+            df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+
+        # Clean time strings
+        if "Time" in df.columns:
+            df["Time"] = df["Time"].str.strip()
+
+        return df
 
 
 class SwimmerDataScraper:
@@ -42,6 +139,7 @@ class SwimmerDataScraper:
             logger.error(f"Failed to initialize WebDriver: {e}")
             raise
 
+    @retry_on_exception(max_retries=3)
     def search_swimmer(self, first_name: str, last_name: str) -> None:
         """
         Search for a swimmer using their name.
@@ -67,6 +165,7 @@ class SwimmerDataScraper:
             logger.error(f"Error searching for swimmer: {e}")
             raise
 
+    @retry_on_exception(max_retries=3)
     def select_swimmer_profile(self, club_name: str = "Rockwood Swim Club") -> None:
         """
         Select swimmer's profile from search results.
@@ -84,6 +183,7 @@ class SwimmerDataScraper:
             logger.error(f"Could not find swimmer associated with {club_name}")
             raise
 
+    @retry_on_exception(max_retries=3)
     def select_competition_year(self, year: str = "-1") -> None:
         """Select the first competition year from the dropdown."""
         try:
@@ -95,7 +195,7 @@ class SwimmerDataScraper:
             logger.error("Timeout waiting for competition year dropdown")
             raise
 
-    def extract_table_data(self) -> pd.DataFrame:
+    def extract_table_data(self) -> Tuple[pd.DataFrame, dict]:
         """
         Extract data from the table and return as DataFrame.
 
@@ -115,8 +215,8 @@ class SwimmerDataScraper:
             df = pd.DataFrame(rows, columns=headers)
             df = df.rename(columns=lambda x: x.split("\n")[0] if "\n" in x else x)
 
-            logger.info("Successfully extracted table data")
-            return df
+            logger.info("Successfully extracted raw table data")
+            return SwimmerDataValidator.validate_dataframe(df)
         except Exception as e:
             logger.error(f"Error extracting table data: {e}")
             raise
