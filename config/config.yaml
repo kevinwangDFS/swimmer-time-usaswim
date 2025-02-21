@@ -1,0 +1,12 @@
+chromedriver:
+  path: "/opt/homebrew/bin/chromedriver"
+  wait_time: 10
+
+output:
+  file: "downloaded_table.csv"
+
+swimmer:
+  first_name: "Alyssa"
+  last_name: "Wang"
+  club_name: "Rockwood Swim Club"
+  year: "-1" # -1 for all years

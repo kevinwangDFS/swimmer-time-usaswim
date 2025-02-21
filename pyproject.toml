@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "swimmer-time"
+version = "0.1.0"
+description = "A package to scrape swimmer time data from USA Swimming"
+authors = ["Kevin Wang"]
+readme = "README.md"
+packages = [{ include = "swimmer_time", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pandas = "^2.0.0"
+selenium = "^4.0.0"
+pyyaml = "^6.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+swimmer-time = "swimmer_time.cli:main"
