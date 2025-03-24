@@ -57,7 +57,7 @@ def retry_on_exception(max_retries: int = 3, initial_delay: int = 1):
 class SwimmerDataValidator:
     """Validates and cleans swimmer time data."""
 
-    EXPECTED_COLUMNS = ["Date", "Meet", "Event", "Time", "Standard"]
+    EXPECTED_COLUMNS = ["SWIM DATE", "MEET", "EVENT", "SWIM TIME", "TIME STANDARD"]
 
     @staticmethod
     def validate_dataframe(df: pd.DataFrame) -> Tuple[pd.DataFrame, dict]:
